@@ -11,6 +11,9 @@ use matrix::{RGBMatrix, RGB8};
 use minigame::MiniGame;
 use mpu6886::MPU6886;
 
+type GenError = Box<dyn std::error::Error>;
+type GenResult<T> = Result<T, GenError>;
+
 fn main() {
     // It is necessary to call this function once. Otherwise some patches to the runtime
     // implemented by esp-idf-sys might not link properly. See https://github.com/esp-rs/esp-idf-template/issues/71
@@ -20,7 +23,7 @@ fn main() {
     esp_idf_svc::log::EspLogger::initialize_default();
 
     log::info!("Starting application!");
-    let peripherals = Peripherals::take().unwrap();
+    let peripherals = Peripherals::take().expect("Initializing peripherals failed");
 
     // MPU
     let i2c = peripherals.i2c0;
@@ -28,11 +31,14 @@ fn main() {
     let scl = peripherals.pins.gpio21.into();
     let baudrate = KiloHertz(400).into();
 
-    let mut mpu = MPU6886::new(i2c, sda, scl, baudrate);
-    mpu.init();
+    let mut mpu = MPU6886::new(i2c, sda, scl, baudrate)
+        .expect("Failed to initialize MPU driver")
+        .init()
+        .expect("MPU configuration failed");
 
     // LED Matrix
-    let mut matrix = RGBMatrix::new(5, 5, peripherals.pins.gpio27, peripherals.rmt.channel0);
+    let mut matrix = RGBMatrix::new(5, 5, peripherals.pins.gpio27, peripherals.rmt.channel0)
+        .expect("Unable to initialize LED Matrix driver");
     let player_color = RGB8::new(0, 0, 100);
 
     // Minigame
@@ -49,7 +55,11 @@ fn main() {
         matrix.clear();
         matrix.set_xy_rgb(game.curr_pos.x.into(), game.curr_pos.y.into(), player_color);
 
-        let acc = mpu.get_acc_data();
+        let acc = match mpu.get_acc_data() {
+            Ok(data) => data,
+            Err(_) => continue,
+        };
+
         let pitch = acc.y.atan2(acc.x.powi(2) + acc.z.powi(2)) * 180.0 / PI;
         let roll = acc.x.atan2(acc.y.powi(2) + acc.z.powi(2)) * 180.0 / PI;
 

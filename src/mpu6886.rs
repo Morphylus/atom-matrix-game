@@ -9,6 +9,8 @@ use esp_idf_svc::{
     sys::TickType_t,
 };
 
+use crate::GenResult;
+
 const MPU_ADDR: u8 = 0x68;
 
 const MPU_PWR_MGMT_1: u8 = 0x6b;
@@ -29,73 +31,65 @@ impl<'d> MPU6886<'d> {
         sda: AnyIOPin,
         scl: AnyIOPin,
         baudrate: Hertz,
-    ) -> Self {
+    ) -> GenResult<Self> {
         let i2c_config = I2cConfig::new().baudrate(baudrate);
-        let i2c_driver = I2cDriver::new(i2c, sda, scl, &i2c_config).unwrap();
-        MPU6886 { i2c_driver }
+        let i2c_driver = I2cDriver::new(i2c, sda, scl, &i2c_config)?;
+        Ok(MPU6886 { i2c_driver })
     }
 
-    pub fn init(&mut self) {
+    pub fn init(&mut self) -> GenResult<Self> {
         let delay: Delay = Default::default();
 
         // Overwrite with zero
-        self.mpu_write_data(MPU_PWR_MGMT_1, 0x00);
+        self.mpu_write_data(MPU_PWR_MGMT_1, 0x00)?;
         delay.delay_ms(10);
 
         // Reset device
-        self.mpu_write_data(MPU_PWR_MGMT_1, 0x01 << 7);
+        self.mpu_write_data(MPU_PWR_MGMT_1, 0x01 << 7)?;
         delay.delay_ms(10);
 
         // Start clock
-        self.mpu_write_data(MPU_PWR_MGMT_1, 0x01);
+        self.mpu_write_data(MPU_PWR_MGMT_1, 0x01)?;
         delay.delay_ms(10);
 
         // Configure accelometer with 8g
-        self.mpu_write_data(MPU_ACCELL_CONFIG, 0x10);
+        self.mpu_write_data(MPU_ACCELL_CONFIG, 0x10)?;
         delay.delay_ms(1);
 
         // Configure gyro with 2000dps
-        self.mpu_write_data(MPU_GYRO_CONFIG, 0x18);
+        self.mpu_write_data(MPU_GYRO_CONFIG, 0x18)?;
         delay.delay_ms(1);
+
+        Ok(self)
     }
 
-    pub fn get_acc_x(&mut self) -> f32 {
-        self.get_acc_data().x
-    }
-
-    pub fn get_acc_y(&mut self) -> f32 {
-        self.get_acc_data().y
-    }
-
-    pub fn get_acc_z(&mut self) -> f32 {
-        self.get_acc_data().z
-    }
-
-    pub fn get_acc_data(&mut self) -> AccData {
+    pub fn get_acc_data(&mut self) -> GenResult<AccData> {
         let mut acc_data_buffer = [0_u8; 6];
-        self.mpu_read_data(MPU_ACCELL_DATA, &mut acc_data_buffer);
+        self.mpu_read_data(MPU_ACCELL_DATA, &mut acc_data_buffer)?;
 
         let acc_x = ((acc_data_buffer[0] as i16) << 8 | acc_data_buffer[1] as i16) as f32 / 4096.0;
         let acc_y = ((acc_data_buffer[2] as i16) << 8 | acc_data_buffer[3] as i16) as f32 / 4096.0;
         let acc_z = ((acc_data_buffer[4] as i16) << 8 | acc_data_buffer[5] as i16) as f32 / 4096.0;
 
-        AccData {
+        Ok(AccData {
             x: acc_x,
             y: acc_y,
             z: acc_z,
-        }
+        })
     }
 
-    fn mpu_write_data(&mut self, register_address: u8, data: u8) {
+    fn mpu_write_data(&mut self, register_address: u8, data: u8) -> GenResult<()> {
         self.i2c_driver
-            .write(MPU_ADDR, &[register_address, data], TickType_t::MAX)
-            .unwrap();
+            .write(MPU_ADDR, &[register_address, data], TickType_t::MAX)?;
+
+        Ok(())
     }
 
-    fn mpu_read_data(&mut self, register_address: u8, buffer: &mut [u8]) {
+    fn mpu_read_data(&mut self, register_address: u8, buffer: &mut [u8]) -> GenResult<()> {
         self.i2c_driver
-            .write_read(MPU_ADDR, &[register_address], buffer, TickType_t::MAX)
-            .unwrap();
+            .write_read(MPU_ADDR, &[register_address], buffer, TickType_t::MAX)?;
+
+        Ok(())
     }
 }
 
