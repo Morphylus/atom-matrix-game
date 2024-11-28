@@ -53,7 +53,9 @@ fn main() {
         let pitch = acc.y.atan2(acc.x.powi(2) + acc.z.powi(2)) * 180.0 / PI;
         let roll = acc.x.atan2(acc.y.powi(2) + acc.z.powi(2)) * 180.0 / PI;
 
-        let speed_multiplier = 10.0;
+        let tilt_magnitude = (pitch.powi(2) + roll.powi(2)).sqrt();
+        let normalized_tilt = (tilt_magnitude / 90.0).clamp(0.0, 1.0);
+        let speed_multiplier = 1.0 + (1.0 - (1.0 - normalized_tilt).powf(4.0)) * 15.0;
         game.update_position_with_delta(pitch, roll, delta * speed_multiplier);
 
         // Maintain framerate
