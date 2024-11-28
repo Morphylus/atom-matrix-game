@@ -31,12 +31,8 @@ impl MiniGame {
         let normalized_pitch = pitch / magnitude;
         let normalized_roll = roll / magnitude;
 
-        self.fractional_x = (self.fractional_x + normalized_roll * delta_time)
-            .max(0.0)
-            .min(4.0);
-        self.fractional_y = (self.fractional_y + normalized_pitch * delta_time)
-            .max(0.0)
-            .min(4.0);
+        self.fractional_x = (self.fractional_x + normalized_roll * delta_time).clamp(0.0, 4.0);
+        self.fractional_y = (self.fractional_y + normalized_pitch * delta_time).clamp(0.0, 4.0);
 
         self.curr_pos = Position {
             x: self.fractional_x as u8,

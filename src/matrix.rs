@@ -39,7 +39,7 @@ impl<'d> RGBMatrix<'d> {
         Ok(())
     }
 
-    pub fn set_rgb(&mut self, pixel: usize, rgb: RGB8) -> GenResult<()> {
+    pub fn _set_rgb(&mut self, pixel: usize, rgb: RGB8) -> GenResult<()> {
         match self.led_array.get_mut(pixel) {
             Some(curr_color) => {
                 *curr_color = rgb;

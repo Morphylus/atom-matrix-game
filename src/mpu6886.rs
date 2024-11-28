@@ -14,11 +14,11 @@ use crate::GenResult;
 const MPU_ADDR: u8 = 0x68;
 
 const MPU_PWR_MGMT_1: u8 = 0x6b;
-const MPU_PWR_MGMT_2: u8 = 0x6c;
+const _MPU_PWR_MGMT_2: u8 = 0x6c;
 
 const MPU_ACCELL_CONFIG: u8 = 0x1c;
 const MPU_GYRO_CONFIG: u8 = 0x1b;
-const MPU_CONFIG: u8 = 0x1a;
+const _MPU_CONFIG: u8 = 0x1a;
 
 const MPU_ACCELL_DATA: u8 = 0x3b;
 pub struct MPU6886<'a> {
