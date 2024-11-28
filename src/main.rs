@@ -52,8 +52,10 @@ fn main() {
         let frame_start = Instant::now();
         let delta = frame_start.duration_since(last_frame).as_secs_f32();
 
-        matrix.clear();
-        matrix.set_xy_rgb(game.curr_pos.x.into(), game.curr_pos.y.into(), player_color);
+        matrix.clear().expect("Clear matrix failed");
+        matrix
+            .set_xy_rgb(game.curr_pos.x.into(), game.curr_pos.y.into(), player_color)
+            .expect("Setting pixel color failed");
 
         let acc = match mpu.get_acc_data() {
             Ok(data) => data,

@@ -37,7 +37,7 @@ impl<'d> MPU6886<'d> {
         Ok(MPU6886 { i2c_driver })
     }
 
-    pub fn init(&mut self) -> GenResult<Self> {
+    pub fn init(mut self) -> GenResult<Self> {
         let delay: Delay = Default::default();
 
         // Overwrite with zero
